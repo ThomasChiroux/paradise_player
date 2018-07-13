@@ -16,6 +16,7 @@ import uuid
 import xml.etree.ElementTree as ET
 
 import requests
+from requests.exceptions import RequestException
 
 
 def get_image(url, tmpdir):
@@ -105,8 +106,8 @@ def play(config):
             except subprocess.TimeoutExpired:
                 pass
             else:
-                if(err is not None):
-                    logging.error("STREAM PLAYER ERROR: " + err)
+                if err is not None:
+                    logging.error("STREAM PLAYER ERROR: %s", err)
             # refresh datas
             if (time.time() >= next_refresh and 
                     time.time() >= last_refresh + config.getint("system", 
@@ -115,7 +116,7 @@ def play(config):
                 resp = requests.get(config.get('stream', "data"))
                 try:
                     resp.raise_for_status()
-                except:
+                except RequestException:
                     pass
                 else:
                     root = ET.fromstring(resp.content)
@@ -182,6 +183,7 @@ def play(config):
                 os.remove(last_image)
             except FileNotFoundError:
                 pass
+
 
 def main():
     """Read the config and start playing."""

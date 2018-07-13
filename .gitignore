@@ -6,7 +6,10 @@
 .coverage
 *.log
 *.egg-info
-venv/*
-build/*
-dist/*
-_build/*
+venv
+build
+dist
+_build
+.vscode
+.mypy_cache
+.pytest_cache

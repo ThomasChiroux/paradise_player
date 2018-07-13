@@ -7,6 +7,14 @@ name = "pypi"
 requests = "*"
 
 [dev-packages]
+twine = "*"
+pylint = "*"
+"pep8" = "*"
+pyflakes = "*"
+"flake8" = "*"
+"pep257" = "*"
+mypy = "*"
+black = "*"
 
 [requires]
 python_version = "3.6"
