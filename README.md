@@ -1,27 +1,33 @@
 # Radio Paradise player and notifier
 
+Radio paradise: https://www.radioparadise.com
+
+This program plays radio paradise's stream from cli and send notifications on what's currently playing using your desktop notification system.
+
+This is tested (and certainly working only) under linux.
+
 ## usage
 
-Launch the program in command line with
+* Launch the program in command line with
 
 ```$ paradise_player```
 
-or the shortcut
+* or the shortcut
 
 ```$ rpp```
 
-it will start to play the steam and send notification when song changes.
+* it will start to play the steam and send notification when song changes.
 
 
-Ctrl+C to stop it
+* Ctrl+C to stop it
 
 ## installation
 
-```pip install paradise_player```
+```$ pip install paradise_player```
 
 or clone the repository and run
 
-```python setup.py install```
+```$ python setup.py install```
 
 ## configuration
 
@@ -35,7 +41,7 @@ see file config_sample.cfg for all configuration parameters.
 
 For archlinux, install libnotify:
 
-```sudo pacman -S libnotify```
+```$ sudo pacman -S libnotify```
 
 * It also requires a notification server, generally built-in if you use 'big' desktop environments like gnome or kde.
 
