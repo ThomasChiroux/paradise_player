@@ -19,8 +19,7 @@ Ctrl+C to stop it
 
 ```pip install paradise_player```
 
-or clone the repository at XXXXX
-and run
+or clone the repository and run
 
 ```python setup.py install```
 
