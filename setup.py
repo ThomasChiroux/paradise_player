@@ -1,11 +1,8 @@
 """setuptools installer for paradise player."""
-
 import os
-import uuid
 
 from setuptools import find_packages
 from setuptools import setup
-from setuptools.command.build_py import build_py
 
 # local imports
 here = os.path.abspath(os.path.dirname(__file__))
@@ -30,7 +27,7 @@ setup(name='paradise_player',
           "Programming Language :: Python :: 3.6",
           "Programming Language :: Python :: 3.7",
           "Operating System :: POSIX :: Linux", ],
-      keywords='test',
+      keywords='radio_paradise radio player notification',
       author='Thomas Chiroux',
       author_email='',
       license='LICENSE',
