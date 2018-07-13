@@ -1,0 +1,12 @@
+# use glob syntax.
+
+*.pyc
+*.tmproj
+.idea/*
+.coverage
+*.log
+*.egg-info
+venv/*
+build/*
+dist/*
+_build/*

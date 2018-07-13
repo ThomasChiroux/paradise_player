@@ -5,15 +5,15 @@ config is stored in ~/.config/paradise_player/config.cfg
 
 System requirements:
 * notify-send
-* ffplay (commonly in ffmpeg package) or vlc or mplayer for example
+* ffplay or vlc or mplayer...
 """
-import xml.etree.ElementTree as ET
 import configparser
+import logging
 import os
 import subprocess
 import time
 import uuid
-import logging
+import xml.etree.ElementTree as ET
 
 import requests
 
@@ -195,8 +195,8 @@ def main():
         "title": "{artist}",
         "content": "{title}\n[{album} - {release_date}]",
         "repeat_title": "{artist}",
-        "repeat_content": "{title}\n[{album} - {release_date}]\n<small><i>(currently playing)</i></small>",
-        #"play_cmd": "ffplay -stimeout 10000000 -autoexit -loglevel quiet -nostats -nodisp {url}",
+        "repeat_content": "{title}\n[{album} - {release_date}]\n"
+                          "<small><i>(currently playing)</i></small>",
         "play_cmd": "cvlc --http-reconnect --repeat {url}",
         "default_refresh": "30",
         "tmpdir": "/tmp/",
