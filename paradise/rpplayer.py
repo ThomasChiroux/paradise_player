@@ -15,6 +15,9 @@ import time
 import uuid
 import xml.etree.ElementTree as ET
 
+# for debugging purposes:
+from pprint import pprint
+
 import requests
 from requests.exceptions import RequestException
 
@@ -127,7 +130,13 @@ def play(config):
                     for elt in current:
                         current_song[elt.tag] = elt.text
                     # now I have a dict with current_song datas
+                    # some debug:
+                    # print("=== %s: " % time.time())
+                    # pprint(current_song)
+                    # end of debug
                     if current_song.get('songid') != last_song:
+                        # yes the song has changed: display a new notification:
+                        
                         image = get_image(current_song.get('coverart'),
                                           tmpdir=config.get("system", "tmpdir"))
                         notify(
@@ -147,16 +156,17 @@ def play(config):
                         last_refresh = time.time()
                         next_refresh = int(current_song.get(
                             'refresh_time', 
-                            time.time()))
+                            time.time())) + config.getint("system", "offset")
                         middle_refresh = int(last_refresh + 
                                              (next_refresh - last_refresh) / 2)
                     else:  
                         # we refreshed, but got the same song.. this is kind of wrong
                         # TODO: do something to 'learn' the offset and use it later
+                        # print("== Debug: Last refresh too soon")
                         last_refresh = time.time()
                         next_refresh = int(current_song.get(
                             'refresh_time', 
-                            time.time() + config.getint("system", "default_refresh")))
+                            time.time())) + config.getint("system", "default_refresh")
                     
             elif (config.getboolean("notification", "repeat_notification") and
                     middle_refresh is not None and 
@@ -201,6 +211,7 @@ def main():
                           "<small><i>(currently playing)</i></small>",
         "play_cmd": "cvlc --http-reconnect --repeat {url}",
         "default_refresh": "30",
+        "offset": "62",
         "tmpdir": "/tmp/",
     }
     config.read(os.path.expanduser('~/.config/paradise_player/config.cfg'))
