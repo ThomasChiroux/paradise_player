@@ -9,7 +9,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md'), encoding='UTF-8').read()
 NEWS = open(os.path.join(here, 'NEWS.md'), encoding='UTF-8').read()
 
-version = "0.1"
+version = "0.2"
 
 dev_reqs = []
 reqs = ["requests"]
@@ -19,6 +19,7 @@ setup(name='paradise_player',
       version=version,
       description="CLI Player and notifier for radio paradise",
       long_description=README + '\n\n' + NEWS,
+      long_description_content_type="text/markdown",
       classifiers=[
           "License :: OSI Approved :: MIT License",
           "Programming Language :: Python",

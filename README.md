@@ -25,7 +25,7 @@ This is tested (and certainly working only) under linux.
 
 ```$ pip install paradise_player```
 
-or clone the repository and run
+or clone the repository [from github](https://github.com/ThomasChiroux/paradise_player) and run
 
 ```$ python setup.py install```
 
