@@ -7,6 +7,7 @@ System requirements:
 * notify-send
 * ffplay or vlc or mplayer...
 """
+import argparse
 import configparser
 import logging
 import os
@@ -25,12 +26,16 @@ from requests.exceptions import RequestException
 def get_image(url, tmpdir):
     """get an image from url, store it in temp file and return the filename."""
     if url is not None:
-        response = requests.get(url)
-        if response.status_code == 200:
-            filename = os.path.join(tmpdir, uuid.uuid4().hex + ".jpg")
-            with open(filename, 'wb') as f:
-                f.write(response.content)
-            return filename
+        try:
+            response = requests.get(url, timeout=1.5)
+        except requests.exceptions.Timeout:
+            return None
+        else:
+            if response.status_code == 200:
+                filename = os.path.join(tmpdir, uuid.uuid4().hex + ".jpg")
+                with open(filename, 'wb') as f:
+                    f.write(response.content)
+                return filename
 
 
 def notify(notify_cmd, title, content, image=None, urgency='normal'):
@@ -69,13 +74,13 @@ def format_string(string, data):
         rating=data.get("rating", ""),
         coverart=data.get("coverart", ""),
         release_date=data.get("release_date", ""))
-        
+
 
 def play(config):
     """Play the steam and get last song in RP xml stream and send notify.
 
     Data Content is (with sample):
-    
+
     refresh_time: 1531326250
     playtime:  9:17 am
     timestamp:  1531325859
@@ -97,30 +102,34 @@ def play(config):
 
     # start the stream
     print("Playing radio paradise...")
-    proc = play_stream(
-        config.get("player", "play_cmd").format(url=config.get('stream', "url")))
+    if not config.getboolean("player", "noplay"):
+        print("launch the player")
+        proc = play_stream(
+            config.get("player",
+                       "play_cmd").format(url=config.get('stream', "url")))
 
     # monitor the stream and get info about what is steamed for notify
     try:
         while True:
-            # monitor the stream
-            try:
-                out, err = proc.communicate(timeout=1)
-            except subprocess.TimeoutExpired:
-                pass
-            else:
-                if err is not None:
-                    logging.error("STREAM PLAYER ERROR: %s", err)
+            if not config.getboolean("player", "noplay"):
+                # monitor the stream
+                try:
+                    out, err = proc.communicate(timeout=1)
+                except subprocess.TimeoutExpired:
+                    pass
+                else:
+                    if err is not None:
+                        logging.error("STREAM PLAYER ERROR: %s", err)
             # refresh datas
-            if (time.time() >= next_refresh and 
-                    time.time() >= last_refresh + config.getint("system", 
+            if (time.time() >= next_refresh and
+                    time.time() >= last_refresh + config.getint("system",
                                                                 "default_refresh")):
                 logging.debug(str(time.time()) + ": request...")
                 resp = requests.get(config.get('stream', "data"))
                 try:
                     resp.raise_for_status()
-                except RequestException:
-                    pass
+                except RequestException as exc:
+                    print("Data stream request exception: %s" % exc)
                 else:
                     root = ET.fromstring(resp.content)
                     current_song = {}
@@ -136,14 +145,13 @@ def play(config):
                     # end of debug
                     if current_song.get('songid') != last_song:
                         # yes the song has changed: display a new notification:
-                        
                         image = get_image(current_song.get('coverart'),
                                           tmpdir=config.get("system", "tmpdir"))
                         notify(
                             config.get('notification', 'notify_cmd'),
-                            format_string(config.get('notification', 'title'), 
+                            format_string(config.get('notification', 'title'),
                                           current_song),
-                            format_string(config.get('notification', 'content'), 
+                            format_string(config.get('notification', 'content'),
                                           current_song),
                             image=image)
                         if last_image:
@@ -155,39 +163,41 @@ def play(config):
                         last_song = current_song.get('songid')
                         last_refresh = time.time()
                         next_refresh = int(current_song.get(
-                            'refresh_time', 
+                            'refresh_time',
                             time.time())) + config.getint("system", "offset")
-                        middle_refresh = int(last_refresh + 
+                        middle_refresh = int(last_refresh +
                                              (next_refresh - last_refresh) / 2)
-                    else:  
+                    else:
                         # we refreshed, but got the same song.. this is kind of wrong
                         # TODO: do something to 'learn' the offset and use it later
                         # print("== Debug: Last refresh too soon")
                         last_refresh = time.time()
                         next_refresh = int(current_song.get(
-                            'refresh_time', 
+                            'refresh_time',
                             time.time())) + config.getint("system", "default_refresh")
-                    
+
             elif (config.getboolean("notification", "repeat_notification") and
-                    middle_refresh is not None and 
+                    middle_refresh is not None and
                     time.time() >= middle_refresh and current_song is not None):
                 # repeat notification in the middle of the song in low level
                 notify(
                     config.get('notification', 'notify_cmd'),
-                    format_string(config.get('notification', 'repeat_title'), 
+                    format_string(config.get('notification', 'repeat_title'),
                                   current_song),
-                    format_string(config.get('notification', 'repeat_content'), 
+                    format_string(config.get('notification', 'repeat_content'),
                                   current_song),
                     image=last_image,
                     urgency='low')
                 middle_refresh = None
             time.sleep(1)
     except (KeyboardInterrupt, Exception) as exc:
-        logging.error("Exception: %s (%s), stop..." % (exc.__class__.__name__, exc))
-        try:
-            proc.kill()
-        except Exception:
-            pass
+        logging.error(
+            "Exception: %s (%s), stop..." % (exc.__class__.__name__, exc))
+        if not config.getboolean("player", "noplay"):
+            try:
+                proc.kill()
+            except Exception:
+                pass
         if last_image:
             try:
                 os.remove(last_image)
@@ -213,8 +223,19 @@ def main():
         "default_refresh": "30",
         "offset": "62",
         "tmpdir": "/tmp/",
+        "noplay": False,
     }
     config.read(os.path.expanduser('~/.config/paradise_player/config.cfg'))
+
+    parser = argparse.ArgumentParser(description='Radio Paradise Player.')
+    parser.add_argument(
+        '-n', '--noplay', action='store_true',
+        help='Do not launch the player, only send notifications.')
+
+    args = parser.parse_args()
+    if args.noplay:
+        config.set("player", "noplay", "True")
+        print("No play mode")
     play(config)
 
 
